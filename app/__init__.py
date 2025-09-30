@@ -40,7 +40,11 @@ def create_app():
     # Create database tables and admin user
     with app.app_context():
         db.create_all()
-        create_admin_user()
+        try:
+            create_admin_user()
+        except Exception as e:
+            print(f"⚠️  Warning: Could not create admin user: {str(e)}")
+            print("   App will continue without admin user creation.")
     
     return app
 
@@ -50,15 +54,24 @@ def create_admin_user():
     admin_email = os.environ.get('ADMIN_EMAIL', 'admin@stressdiary.com')
     admin_password = os.environ.get('ADMIN_PASSWORD', 'admin123')
     
-    # Check if admin user already exists
-    existing_admin = User.query.filter_by(username=admin_username).first()
-    if not existing_admin:
-        admin_user = User(username=admin_username, email=admin_email)
-        admin_user.set_password(admin_password)
-        db.session.add(admin_user)
-        db.session.commit()
-        print(f"✅ Admin user '{admin_username}' created successfully!")
-        print(f"   Email: {admin_email}")
-        print(f"   Password: {admin_password}")
-    else:
-        print(f"ℹ️  Admin user '{admin_username}' already exists.")
+    try:
+        # Check if admin user already exists by username or email
+        existing_admin = User.query.filter(
+            (User.username == admin_username) | (User.email == admin_email)
+        ).first()
+        
+        if not existing_admin:
+            admin_user = User(username=admin_username, email=admin_email)
+            admin_user.set_password(admin_password)
+            db.session.add(admin_user)
+            db.session.commit()
+            print(f"✅ Admin user '{admin_username}' created successfully!")
+            print(f"   Email: {admin_email}")
+            print(f"   Password: {admin_password}")
+        else:
+            print(f"ℹ️  Admin user already exists (username: {existing_admin.username}, email: {existing_admin.email})")
+            
+    except Exception as e:
+        print(f"⚠️  Error creating admin user: {str(e)}")
+        db.session.rollback()
+        # Try to continue without failing the app startup
