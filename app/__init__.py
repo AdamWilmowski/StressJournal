@@ -77,7 +77,13 @@ def create_admin_user():
             print(f"   Email: {admin_email}")
             print(f"   Password: {admin_password}")
         else:
-            print(f"ℹ️  Admin user already exists (username: {existing_admin.username}, email: {existing_admin.email})")
+            # Update existing admin user with current environment variables
+            existing_admin.email = admin_email
+            existing_admin.set_password(admin_password)
+            db.session.commit()
+            print(f"✅ Admin user '{admin_username}' updated successfully!")
+            print(f"   Email: {admin_email}")
+            print(f"   Password: {admin_password}")
             
     except Exception as e:
         print(f"⚠️  Error creating admin user: {str(e)}")
