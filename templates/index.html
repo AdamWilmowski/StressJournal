@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Strona główna - Dziennik Stresu{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-heart-pulse text-primary me-2"></i>Witaj ponownie, {{ session.username }}!</h1>
+            <a href="{{ url_for('events.add_event') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>Dodaj nowe wydarzenie
+            </a>
+        </div>
+
+        {% if events %}
+            <h3 class="mb-3">Ostatnie wydarzenia</h3>
+            <div class="row">
+                {% for event in events %}
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title">{{ event.title }}</h5>
+                                <span class="badge bg-{{ 'success' if event.stress_level <= 3 else 'warning' if event.stress_level <= 6 else 'danger' }}">
+                                    Poziom {{ event.stress_level }}
+                                </span>
+                            </div>
+                            <p class="card-text text-muted small">
+                                <i class="fas fa-calendar me-1"></i>{{ event.date.strftime('%B %d, %Y') }}
+                                {% if event.time %}
+                                    <i class="fas fa-clock ms-2 me-1"></i>{{ event.time.strftime('%H:%M') }}
+                                {% endif %}
+                                {% if event.category %}
+                                    <i class="fas fa-tag ms-2 me-1"></i>{{ event.category.title() }}
+                                {% endif %}
+                            </p>
+                            {% if event.description %}
+                                <p class="card-text">{{ event.description[:100] }}{% if event.description|length > 100 %}...{% endif %}</p>
+                            {% endif %}
+                            <a href="{{ url_for('events.view_event', event_id=event.id) }}" class="btn btn-outline-primary btn-sm">
+                                Zobacz szczegóły
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="text-center mt-4">
+                <a href="{{ url_for('events.list_events') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-list me-1"></i>Zobacz wszystkie wydarzenia
+                </a>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-heart-pulse fa-3x text-muted mb-3"></i>
+                <h3 class="text-muted">Brak zarejestrowanych wydarzeń</h3>
+                <p class="text-muted">Zacznij śledzić swoje wydarzenia stresowe, aby uzyskać wgląd w swoje wzorce.</p>
+                <a href="{{ url_for('events.add_event') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus me-2"></i>Dodaj swoje pierwsze wydarzenie
+                </a>
+            </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Szybkie statystyki</h5>
+            </div>
+            <div class="card-body">
+                {% if events %}
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 class="text-primary">{{ events|length }}</h4>
+                            <small class="text-muted">Ostatnie wydarzenia</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-warning">
+                                {% set avg_stress = (events|sum(attribute='stress_level') / events|length) %}
+                                {{ "%.1f"|format(avg_stress) }}
+                            </h4>
+                            <small class="text-muted">Średni poziom stresu</small>
+                        </div>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center">Brak dostępnych danych</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Szybkie akcje</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('events.add_event') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Dodaj nowe wydarzenie
+                    </a>
+                    <a href="{{ url_for('events.list_events') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-list me-2"></i>Przeglądaj wszystkie wydarzenia
+                    </a>
+                    <a href="{{ url_for('analysis.stress_analysis') }}" class="btn btn-outline-info">
+                        <i class="fas fa-chart-line me-2"></i>Zobacz analizę
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Wszystkie wydarzenia - Dziennik Stresu{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-list me-2"></i>Wszystkie wydarzenia stresowe</h1>
+    <a href="{{ url_for('events.add_event') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i>Dodaj nowe wydarzenie
+    </a>
+</div>
+
+{% if events.items %}
+    <div class="row">
+        {% for event in events.items %}
+        <div class="col-lg-6 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title">{{ event.title }}</h5>
+                        <span class="badge bg-{{ 'success' if event.stress_level <= 3 else 'warning' if event.stress_level <= 6 else 'danger' }}">
+                            Level {{ event.stress_level }}
+                        </span>
+                    </div>
+                    
+                    <p class="card-text text-muted small mb-2">
+                        <i class="fas fa-calendar me-1"></i>{{ event.date.strftime('%B %d, %Y') }}
+                        {% if event.time %}
+                            <i class="fas fa-clock ms-2 me-1"></i>{{ event.time.strftime('%H:%M') }}
+                        {% endif %}
+                        {% if event.category %}
+                            <i class="fas fa-tag ms-2 me-1"></i>{{ event.category.title() }}
+                        {% endif %}
+                        {% if event.location %}
+                            <i class="fas fa-map-marker-alt ms-2 me-1"></i>{{ event.location }}
+                        {% endif %}
+                    </p>
+                    
+                    {% if event.description %}
+                        <p class="card-text">{{ event.description[:150] }}{% if event.description|length > 150 %}...{% endif %}</p>
+                    {% endif %}
+                    
+                    {% if event.triggers %}
+                        <div class="mb-2">
+                            <small class="text-muted"><strong>Triggers:</strong> {{ event.triggers[:100] }}{% if event.triggers|length > 100 %}...{% endif %}</small>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{{ url_for('events.view_event', event_id=event.id) }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-eye me-1"></i>View
+                        </a>
+                        <small class="text-muted">{{ event.created_at.strftime('%m/%d/%Y %H:%M') }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if events.pages > 1 %}
+    <nav aria-label="Events pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if events.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('events', page=events.prev_num) }}">Previous</a>
+                </li>
+            {% endif %}
+            
+            {% for page_num in events.iter_pages() %}
+                {% if page_num %}
+                    {% if page_num != events.page %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('events', page=page_num) }}">{{ page_num }}</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                    {% endif %}
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if events.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('events', page=events.next_num) }}">Next</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+{% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-list fa-3x text-muted mb-3"></i>
+        <h3 class="text-muted">No events found</h3>
+        <p class="text-muted">Start tracking your stress events to see them here.</p>
+        <a href="{{ url_for('events.add_event') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Add Your First Event
+        </a>
+    </div>
+{% endif %}
+{% endblock %}
+

@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Analiza - Dziennik Stresu{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-chart-line me-2"></i>Analiza stresu</h1>
+    <a href="{{ url_for('events.add_event') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i>Dodaj nowe wydarzenie
+    </a>
+</div>
+
+{% if total_events > 0 %}
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-primary">{{ total_events }}</h3>
+                    <p class="text-muted mb-0">Wszystkie wydarzenia</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-warning">{{ avg_stress }}</h3>
+                    <p class="text-muted mb-0">Average Stress Level</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-info">{{ recent_events|length }}</h3>
+                    <p class="text-muted mb-0">Events This Week</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-success">
+                        {% if recent_events|length > 0 %}
+                            {% set recent_avg = (recent_events|sum(attribute='stress_level') / recent_events|length) %}
+                            {{ "%.1f"|format(recent_avg) }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </h3>
+                    <p class="text-muted mb-0">Weekly Avg Stress</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Events by Category</h5>
+                </div>
+                <div class="card-body">
+                    {% if categories %}
+                        {% for category, count in categories %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-capitalize">{{ category or 'Uncategorized' }}</span>
+                            <div class="d-flex align-items-center">
+                                <div class="progress me-2" style="width: 100px; height: 8px;">
+                                    <div class="progress-bar" role="progressbar" 
+                                         style="width: {{ (count / total_events * 100)|round(1) }}%"></div>
+                                </div>
+                                <span class="badge bg-primary">{{ count }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No category data available</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Recent Events (Last 7 Days)</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_events %}
+                        {% for event in recent_events[:5] %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <strong>{{ event.title }}</strong>
+                                <br>
+                                <small class="text-muted">
+                                    {{ event.date.strftime('%m/%d') }}
+                                    {% if event.category %}
+                                        • {{ event.category.title() }}
+                                    {% endif %}
+                                </small>
+                            </div>
+                            <span class="badge bg-{{ 'success' if event.stress_level <= 3 else 'warning' if event.stress_level <= 6 else 'danger' }}">
+                                {{ event.stress_level }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                        {% if recent_events|length > 5 %}
+                            <small class="text-muted">... and {{ recent_events|length - 5 }} more events</small>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-muted">No events in the last 7 days</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Insights & Recommendations</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Pattern Analysis</h6>
+                            <ul class="list-unstyled">
+                                {% if avg_stress > 7 %}
+                                    <li><i class="fas fa-exclamation-triangle text-warning me-2"></i>Your average stress level is high. Consider implementing more coping strategies.</li>
+                                {% elif avg_stress > 5 %}
+                                    <li><i class="fas fa-info-circle text-info me-2"></i>Your stress levels are moderate. Continue monitoring and practicing stress management.</li>
+                                {% else %}
+                                    <li><i class="fas fa-check-circle text-success me-2"></i>Great job! Your stress levels are generally low.</li>
+                                {% endif %}
+                                
+                                {% if categories %}
+                                    {% set top_category = categories|first %}
+                                    <li><i class="fas fa-chart-bar text-primary me-2"></i>Most common stress category: <strong>{{ top_category[0].title() if top_category[0] else 'Uncategorized' }}</strong></li>
+                                {% endif %}
+                                
+                                {% if recent_events|length > 5 %}
+                                    <li><i class="fas fa-calendar text-warning me-2"></i>You've had {{ recent_events|length }} stress events this week. Consider what might be contributing to this increase.</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Suggestions</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-heart text-danger me-2"></i>Practice deep breathing exercises when you feel stressed</li>
+                                <li><i class="fas fa-walking text-success me-2"></i>Regular physical activity can help reduce stress</li>
+                                <li><i class="fas fa-moon text-info me-2"></i>Ensure you're getting adequate sleep</li>
+                                <li><i class="fas fa-users text-primary me-2"></i>Consider talking to friends, family, or a professional about your stress</li>
+                                <li><i class="fas fa-book text-warning me-2"></i>Keep detailed records to identify patterns and triggers</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+        <h3 class="text-muted">No Data Available</h3>
+        <p class="text-muted">Start recording stress events to see analysis and insights.</p>
+        <a href="{{ url_for('events.add_event') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Add Your First Event
+        </a>
+    </div>
+{% endif %}
+{% endblock %}
+
