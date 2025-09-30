@@ -2,6 +2,7 @@
 Stress Diary Flask Application Package
 """
 
+import os
 from flask import Flask
 from .models import db
 from .blueprints.auth import auth
@@ -14,8 +15,17 @@ def create_app():
     app = Flask(__name__, template_folder='../templates', static_folder='../static')
     
     # Configuration
-    app.config['SECRET_KEY'] = 'your-secret-key-change-this-in-production'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///stress_diary.db'
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-this-in-production')
+    
+    # Database configuration - use PostgreSQL on Heroku, SQLite locally
+    database_url = os.environ.get('DATABASE_URL')
+    if database_url:
+        # Heroku PostgreSQL
+        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    else:
+        # Local SQLite
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///stress_diary.db'
+    
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
     # Initialize extensions
