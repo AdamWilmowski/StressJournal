@@ -22,9 +22,11 @@ def create_app():
     if database_url:
         # Heroku PostgreSQL
         app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+        print(f"🔗 Using PostgreSQL database: {database_url[:20]}...")
     else:
         # Local SQLite
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///stress_diary.db'
+        print("🔗 Using SQLite database: stress_diary.db")
     
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
@@ -39,7 +41,13 @@ def create_app():
     
     # Create database tables and admin user
     with app.app_context():
-        db.create_all()
+        try:
+            db.create_all()
+            print("✅ Database tables created/verified successfully")
+        except Exception as e:
+            print(f"⚠️  Warning: Database table creation issue: {str(e)}")
+            print("   This might be normal if tables already exist.")
+        
         try:
             create_admin_user()
         except Exception as e:
