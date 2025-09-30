@@ -4,7 +4,7 @@ Stress Diary Flask Application Package
 
 import os
 from flask import Flask
-from .models import db
+from .models import db, User
 from .blueprints.auth import auth
 from .blueprints.main import main
 from .blueprints.events import events
@@ -37,8 +37,28 @@ def create_app():
     app.register_blueprint(events, url_prefix='/')
     app.register_blueprint(analysis, url_prefix='/')
     
-    # Create database tables
+    # Create database tables and admin user
     with app.app_context():
         db.create_all()
+        create_admin_user()
     
     return app
+
+def create_admin_user():
+    """Create admin user if it doesn't exist."""
+    admin_username = os.environ.get('ADMIN_USERNAME', 'admin')
+    admin_email = os.environ.get('ADMIN_EMAIL', 'admin@stressdiary.com')
+    admin_password = os.environ.get('ADMIN_PASSWORD', 'admin123')
+    
+    # Check if admin user already exists
+    existing_admin = User.query.filter_by(username=admin_username).first()
+    if not existing_admin:
+        admin_user = User(username=admin_username, email=admin_email)
+        admin_user.set_password(admin_password)
+        db.session.add(admin_user)
+        db.session.commit()
+        print(f"✅ Admin user '{admin_username}' created successfully!")
+        print(f"   Email: {admin_email}")
+        print(f"   Password: {admin_password}")
+    else:
+        print(f"ℹ️  Admin user '{admin_username}' already exists.")
