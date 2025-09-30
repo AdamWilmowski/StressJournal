@@ -11,10 +11,12 @@ from werkzeug.security import generate_password_hash
 # Add the current directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from app import app, db, User
+from app import create_app
+from app.models import db, User
 
 def create_user():
     """Create a new user interactively."""
+    app = create_app()
     with app.app_context():
         # Create tables if they don't exist
         db.create_all()
@@ -69,6 +71,7 @@ def create_user():
 
 def list_users():
     """List all existing users."""
+    app = create_app()
     with app.app_context():
         users = User.query.all()
         if not users:
